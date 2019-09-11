@@ -196,7 +196,7 @@ class DBSSample(Sample):
 
     def set_selection_function(self, selection):
         """
-        Use this to specify a function returning True for files we 
+        Use this to specify a function returning True for files we
         want to consider only. Input to the selection function is
         the filename
         """
@@ -306,6 +306,7 @@ class SNTSample(DirectorySample):
         self.typ = kwargs.get("typ", "CMS3")
         self.read_only = kwargs.get("read_only", True)
         self.exclude_tag_pattern = kwargs.get("exclude_tag_pattern", "")
+        self.skip_files = kwargs.get("skip_files",None)
 
         # Pass all of the kwargs to the parent class
         super(SNTSample, self).__init__(**kwargs)
@@ -334,6 +335,24 @@ class SNTSample(DirectorySample):
         if self.info.get("files", None):
             return self.info["files"]
         filepaths = glob.glob(self.get_location() + "/" + self.globber)
+
+        #PRO MOVE : Don't go around skipping files if you're a serial procrastinator!
+        if self.skip_files:
+            if type(self.skip_files) is not list:
+                self.skip_files = [self.skip_files]
+            #Append merged_ntuple and .root if not present
+            for filename in self.skip_files:
+                if "merged_ntuple" not in filename:
+                    filename = "merged_ntuple_"+filename
+                if ".root" not in filename:
+                    filename = filename+".root"
+                full_file_path = os.path.join(self.get_location(),filename)
+                if full_file_path in filepaths:
+                    print("Removing {} from list".format(full_file_path))
+                    filepaths.remove(full_file_path)
+                else:
+                    print("{} not in list of files. Skipping its deletion".format(filename))
+
         if self.use_xrootd:
             filepaths = [fp.replace("/hadoop/cms", "") for fp in filepaths]
 
@@ -435,7 +454,7 @@ class DummySample(DirectorySample):
 
 
 if __name__ == '__main__':
-    
+
     s1 = SNTSample(dataset="/MET/Run2016B-17Jul2018_ver1-v1/MINIAOD")
     print(s1.get_files())
     print(len(s1.get_files()))
