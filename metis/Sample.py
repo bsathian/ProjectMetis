@@ -341,10 +341,10 @@ class SNTSample(DirectorySample):
             if type(self.skip_files) is not list:
                 self.skip_files = [self.skip_files]
             for filename in self.skip_files:
-                    print("Removing {} from list".format(filename))
+                    self.logger.info("Removing {} from list".format(filename))
                     filepaths.remove(filename)
                 else:
-                    print("{} not in list of files. Skipping its deletion".format(filename))
+                    self.logger.info("{} not in list of files. Skipping its deletion".format(filename))
 
         if self.use_xrootd:
             filepaths = [fp.replace("/hadoop/cms", "") for fp in filepaths]
