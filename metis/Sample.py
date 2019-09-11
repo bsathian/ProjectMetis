@@ -340,16 +340,9 @@ class SNTSample(DirectorySample):
         if self.skip_files:
             if type(self.skip_files) is not list:
                 self.skip_files = [self.skip_files]
-            #Append merged_ntuple and .root if not present
             for filename in self.skip_files:
-                if "merged_ntuple" not in filename:
-                    filename = "merged_ntuple_"+filename
-                if ".root" not in filename:
-                    filename = filename+".root"
-                full_file_path = os.path.join(self.get_location(),filename)
-                if full_file_path in filepaths:
-                    print("Removing {} from list".format(full_file_path))
-                    filepaths.remove(full_file_path)
+                    print("Removing {} from list".format(filename))
+                    filepaths.remove(filename)
                 else:
                     print("{} not in list of files. Skipping its deletion".format(filename))
 
