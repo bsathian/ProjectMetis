@@ -4,6 +4,7 @@ import json
 from metis.CondorTask import CondorTask
 from metis.Constants import Constants
 import metis.Utils as Utils
+import traceback
 
 class CMSSWTask(CondorTask):
     def __init__(self, **kwargs):
@@ -54,7 +55,12 @@ class CMSSWTask(CondorTask):
         # NOTE Can probably speed this up if it's not an NLO sample
         if not self.is_data and self.output_is_tree:
             self.logger.debug("Calculating negative events for this file")
-            out.get_nevents_negative()
+            try:
+                out.get_nevents_negative()
+            except Exception as e:
+                self.logger.info("{}\nSomething wrong with this file. Delete it by hand. {}{}".format(
+                    "-"*50, traceback.format_exc(), "-"*50,
+                    ))
 
 
     def finalize(self):

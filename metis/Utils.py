@@ -29,12 +29,12 @@ good_sites = set([
             "T2_US_UCSD",
             "T3_US_UCR",
             "T3_US_OSG",
-            "T2_US_Florida",
-            "T2_US_MIT", # Failed to start singularity as of Apr 18
+            # "T2_US_Florida",
+            "T2_US_MIT",
             "T2_US_Nebraska",
             "T2_US_Purdue",
             "T2_US_Vanderbilt",
-            # "T2_US_Wisconsin", # haven't been able to get anything to run here for a long time
+            # "T2_US_Wisconsin",
             "T3_US_Baylor",
             "T3_US_Colorado",
             "T3_US_NotreDame",
@@ -446,11 +446,12 @@ when_to_transfer_output = ON_EXIT
 
     return succeeded, cluster_id
 
-def file_chunker(files, files_per_output=-1, events_per_output=-1, flush=False):
+def file_chunker(files, files_per_output=-1, events_per_output=-1, MB_per_output=-1, flush=False):
     """
     Chunks a list of File objects into list of lists by
     - max number of files (if files_per_output > 0)
     - max number of events (if events_per_output > 0)
+    - filesize in MB (if MB_per_output > 0)
     Chunking happens in order while traversing the list, so
     any leftover can be pushed into a final chunk with flush=True
     """
@@ -460,12 +461,16 @@ def file_chunker(files, files_per_output=-1, events_per_output=-1, flush=False):
     for f in files:
         # if the current file's nevents would push the chunk
         # over the limit, then start a new chunk
-        if (num >= files_per_output > 0) or (num+f.get_nevents() > events_per_output > 0):
+        if ((0 < files_per_output <= num) or 
+                (0 < events_per_output < num+f.get_nevents()) or
+                (0 < MB_per_output < num+f.get_filesizeMB())
+                ):
             chunks.append(chunk)
             num, chunk = 0, []
         chunk.append(f)
         if (files_per_output > 0): num += 1
         elif (events_per_output > 0): num += f.get_nevents()
+        elif (MB_per_output > 0): num += f.get_filesizeMB()
     # push remaining partial chunk if flush is True
     if (len(chunk) == files_per_output) or (flush and len(chunk) > 0):
         chunks.append(chunk)

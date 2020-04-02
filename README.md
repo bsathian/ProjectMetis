@@ -4,73 +4,60 @@
 [![Coverage Status](https://coveralls.io/repos/github/aminnj/ProjectMetis/badge.png)](https://coveralls.io/github/aminnj/ProjectMetis)
 [![Awesome Emojis](https://camo.githubusercontent.com/13c4e50d88df7178ae1882a203ed57b641674f94/68747470733a2f2f63646e2e7261776769742e636f6d2f73696e647265736f726875732f617765736f6d652f643733303566333864323966656437386661383536353265336136336531353464643865383832392f6d656469612f62616467652e737667)](https://gist.github.com/rxaviers/7360908)
 
-As an overview, ProjectMetis seeks to host the following functionality:
-* Ability to create arbitrary tasks with defined inputs and outputs using Python
-* Ability to chain tasks into a queue, handling dependencies transparently
-* Failure handling (where appropriate)
-
 Concrete things that ProjectMetis can do:
 * Submission of arbitrary CMSSW jobs on a dataset (or list of files) to condor
-  * A dataset could be a published DBS dataset, a directory (containing files), or a dataset published on DIS
+  * A dataset could be a published DBS dataset, a directory (containing files), or a dataset published on [DIS](https://github.com/aminnj/dis)
   * Arbitrary CMSSW jobs include CMS4
-* Submit arbitrary "bash" jobs to condor
-  * Coupled with the above, this facilitates babymaking
-* By chaining a set of CMSSW tasks, can go from LHE to MINIAOD quite elegantly
+* Submit arbitrary "bash" jobs to condor (facilitates "babymaking")
+* Chain a set of CMSSW tasks to go from LHE to MINIAOD
 
 In the process of fulfilling the above, ProjectMetis exposes some nice standalone API for:
 * `condor_q`, `condor_submit`, etc.
-* CRAB job submission/monitoring
-* DIS integration (i.e., queries to internal SNT database, MCM, PhEDEx, DBS)
-* File operations
+* [DIS](https://github.com/aminnj/dis) integration (i.e., queries to internal SNT database, MCM, PhEDEx, DBS)
 
 ## Installation and Setup
 0. Checkout this repository
 1. Set up environment via `source setup.sh`. Note that this doesn't overwrite an existing CMSSW environment if you already have one
 
 ## Example
-To submit CMS4 jobs on a dataset, literally just need the dataset name, a pset, and a tarred up CMSSW environment.
+CRAB-like operation requires a dataset name, a CMSSW pset, and a tarball of the environment (if necessary).
 Here's a quick preview, but there are more use case examples in `examples/`.
 ```python
-from metis.Sample import DBSSample
 from metis.CMSSWTask import CMSSWTask
+from metis.Sample import DBSSample
 from metis.StatsParser import StatsParser
+import time
 
-def main():
-    task = CMSSWTask(
-            sample = DBSSample(dataset="/ZeroBias6/Run2017A-PromptReco-v2/MINIAOD"),
-            events_per_output = 450e3,
-            output_name = "merged_ntuple.root",
-            tag = "CMS4_V00-00-03",
-            pset = "pset_test.py",
-            pset_args = "data=True prompt=True",
-            cmssw_version = "CMSSW_9_2_1",
-            tarfile = "/nfs-7/userdata/libCMS3/lib_CMS4_V00-00-03_workaround.tar.gz",
-            is_data = True,
-    )
-    
-    # Do pretty much everything
-    #  - get list of files (or new files that have appeared)
-    #  - chunk inputs to construct outputs
-    #  - submit jobs to condor
-    #  - resubmit jobs that fail
-    task.process()
+def run():
+    total_summary = {}
+    for dsname in [
+                "/SingleMuon/Run2017H-17Nov2017-v2/MINIAOD",
+                "/DoubleMuon/Run2017H-17Nov2017-v1/MINIAOD",
+            ]:
+        task = CMSSWTask(
+                sample = DBSSample(dataset=dsname),
+                events_per_output = 700e3,
+                output_name = "output.root",
+                tag = "v1",
+                pset = "pset_NANO_from_MINIAOD.py",
+                cmssw_version = "CMSSW_10_2_5",
+                scram_arch = "slc6_amd64_gcc700",
+                # Optionally specify a tarball of the CMSSW environment made with `mtarfile`
+                # tarfile = "/nfs-7/userdata/libCMS3/lib_CMS4_V00-00-03_workaround.tar.gz",
+                )
 
-    # Get a nice json summary of files, event counts, 
-    # condor job resubmissions, log file locations, etc.
-    # and push it to a web area (with dashboard goodies)
-    StatsParser(data=total_summary, webdir="~/public_html/dump/metis_test/").do()
+        # Chunk inputs, submit to condor, resubmit failures, etc
+        task.process()
+
+        total_summary[task.get_sample().get_datasetname()] = task.get_task_summary()
+
+    # Web dashboard
+    StatsParser(data=total_summary, webdir="~/public_html/dump/metis_nano/").do()
 
 if __name__ == "__main__":
-
-    # Do stuff, sleep, do stuff, sleep, etc.
     for i in range(100):
-        main()
-
-        # 1 hr power nap so we wake up refreshed
-        # and ready to process some more data
-        time.sleep(1.*3600)
-
-        # Since everything is backed up, totally OK to Ctrl+C and pick up later
+        run()
+        time.sleep(30*60)
 ```
 
 

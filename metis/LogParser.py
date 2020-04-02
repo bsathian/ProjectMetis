@@ -3,7 +3,6 @@ from __future__ import print_function
 import os
 import datetime
 import time
-import numpy as np
 
 def log_parser(fname, do_rate=True, do_error=True, do_header=True):
     fname_out = fname.replace(".err", ".out")

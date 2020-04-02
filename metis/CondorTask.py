@@ -38,6 +38,7 @@ class CondorTask(Task):
         self.open_dataset = kwargs.get("open_dataset", False)
         self.events_per_output = kwargs.get("events_per_output", -1)
         self.files_per_output = kwargs.get("files_per_output", -1)
+        self.MB_per_output = kwargs.get("MB_per_output", -1)
         self.output_name = kwargs.get("output_name", "output.root")
         self.arguments = kwargs.get("arguments", "")
         # self.output_dir = kwargs.get("output_dir",None)
@@ -159,7 +160,7 @@ class CondorTask(Task):
             chunks = [files for _ in range(nchunks)]
             leftoverchunk = []
         else:
-            chunks, leftoverchunk = Utils.file_chunker(files, events_per_output=self.events_per_output, files_per_output=self.files_per_output, flush=flush)
+            chunks, leftoverchunk = Utils.file_chunker(files, events_per_output=self.events_per_output, files_per_output=self.files_per_output, MB_per_output=self.MB_per_output, flush=flush)
             if self.max_jobs > 0:
                 chunks = chunks[:self.max_jobs]
                 leftoverchunk = []
