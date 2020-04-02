@@ -46,7 +46,7 @@ function edit_pset {
     echo "if hasattr(process,'externalLHEProducer'):" >> pset.py
     echo "    process.externalLHEProducer.nEvents = cms.untracked.uint32(${NEVTS})" >> pset.py
     echo "set_output_name(\"${OUTPUTNAME}.root\")" >> pset.py
-    if [ "$INPUTFILENAMES" != "dummyfile" ]; then 
+    if [[ "$INPUTFILENAMES" != "dummy"* ]]; then
         echo "process.source.fileNames = cms.untracked.vstring([" >> pset.py
         for INPUTFILENAME in $(echo "$INPUTFILENAMES" | sed -n 1'p' | tr ',' '\n'); do
             INPUTFILENAME=$(echo $INPUTFILENAME | sed 's|^/hadoop/cms||')
@@ -179,7 +179,7 @@ fi
 
 
 echo "before running: ls -lrth"
-ls -lrth 
+ls -lrth
 
 echo -e "\n--- begin running ---\n" #                           <----- section division
 
@@ -247,7 +247,7 @@ try:
                 foundBad = True
                 print "[RSR] found bad event %i" % i
                 break
-except Exception as ex: 
+except Exception as ex:
     msg = traceback.format_exc()
     if "EDProductGetter" not in msg:
         foundBad = True
